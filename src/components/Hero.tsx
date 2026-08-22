@@ -1,7 +1,10 @@
 import { motion } from 'framer-motion';
 import { ArrowRight, Play, Sparkles } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function Hero() {
+  const navigate = useNavigate();
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -98,17 +101,13 @@ export default function Hero() {
             variants={itemVariants}
             className="flex flex-col sm:flex-row justify-center items-center gap-4 w-full sm:w-auto mb-12"
           >
-            <a
-              href="#cta"
-              onClick={(e) => {
-                e.preventDefault();
-                handleScrollTo('#cta');
-              }}
-              className="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-700 hover:to-brand-600 text-white px-8 py-4 rounded-2xl font-bold shadow-lg shadow-brand-500/25 transition-all duration-300 hover:-translate-y-0.5"
+            <button
+              onClick={() => navigate('/onboarding')}
+              className="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-700 hover:to-brand-600 text-white px-8 py-4 rounded-2xl font-bold shadow-lg shadow-brand-500/25 transition-all duration-300 hover:-translate-y-0.5 cursor-pointer"
             >
               Start Learning Free
               <ArrowRight className="h-5 w-5" />
-            </a>
+            </button>
             <a
               href="#how-it-works"
               onClick={(e) => {

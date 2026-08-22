@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, ArrowRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 // Custom SVG Logo Mark representing AI, personalization, and learning
 const LogoMark = () => (
@@ -45,6 +46,7 @@ const LogoMark = () => (
 );
 
 export default function Navbar() {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [activeSection, setActiveSection] = useState('home');
@@ -289,14 +291,13 @@ export default function Navbar() {
             </a>
 
             {/* Primary CTA Button */}
-            <a
-              href="#cta"
-              onClick={(e) => handleScrollTo(e, '#cta')}
+            <button
+              onClick={() => navigate('/onboarding')}
               className="group inline-flex items-center gap-1.5 bg-gradient-to-r from-brand-600 to-indigo-600 text-white px-5 py-2.5 rounded-full text-sm font-bold shadow-[0_0_12px_rgba(124,58,237,0.3)] hover:shadow-[0_0_20px_rgba(124,58,237,0.6)] hover:scale-[1.03] active:scale-[0.98] hover:brightness-110 transition-all duration-200 cursor-pointer"
             >
               <span>Start Learning</span>
               <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform duration-200" />
-            </a>
+            </button>
           </div>
 
           {/* Mobile Menu Button */}
@@ -409,17 +410,16 @@ export default function Navbar() {
               >
                 Sign In
               </a>
-              <a
-                href="#cta"
-                onClick={(e) => {
-                  handleScrollTo(e, '#cta');
+              <button
+                onClick={() => {
                   setIsOpen(false);
+                  navigate('/onboarding');
                 }}
-                className="flex justify-center items-center gap-2 bg-gradient-to-r from-brand-600 to-indigo-600 text-white py-4 rounded-2xl font-bold shadow-[0_0_12px_rgba(124,58,237,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all"
+                className="flex justify-center items-center gap-2 bg-gradient-to-r from-brand-600 to-indigo-600 text-white py-4 rounded-2xl font-bold shadow-[0_0_12px_rgba(124,58,237,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
               >
                 <span>Start Learning</span>
                 <ArrowRight className="h-5 w-5" />
-              </a>
+              </button>
             </div>
           </motion.div>
         )}

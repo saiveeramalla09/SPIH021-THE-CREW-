@@ -1,7 +1,10 @@
 import { motion } from 'framer-motion';
 import { ArrowRight, Sparkles } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function CTA() {
+  const navigate = useNavigate();
+
   const handleScrollTo = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
     const target = document.querySelector(href);
@@ -44,13 +47,13 @@ export default function CTA() {
 
           {/* Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <a
-              href="#contact"
-              className="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 text-white px-8 py-4 rounded-2xl font-bold shadow-lg shadow-brand-500/25 transition-all duration-300 hover:-translate-y-0.5"
+            <button
+              onClick={() => navigate('/onboarding')}
+              className="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-gradient-to-r from-brand-500 to-brand-600 hover:from-brand-600 hover:to-brand-700 text-white px-8 py-4 rounded-2xl font-bold shadow-lg shadow-brand-500/25 transition-all duration-300 hover:-translate-y-0.5 cursor-pointer"
             >
               Start Learning — It's Free
               <ArrowRight className="h-5 w-5" />
-            </a>
+            </button>
             <a
               href="#home"
               onClick={(e) => handleScrollTo(e, '#home')}
