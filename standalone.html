@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PRIMER — Your Personal AI Tutor</title>
+  <meta name="description" content="PRIMER is an AI-powered personal tutor that adapts every lesson to your child's learning pace. Affordable 1-to-1 education for KG-12 students.">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f5f3ff',
+              100: '#ede9fe',
+              200: '#ddd6fe',
+              300: '#c4b5fd',
+              400: '#a78bfa',
+              500: '#8b5cf6',
+              600: '#7c3aed',
+              700: '#6d28d9',
+              800: '#5b21b6',
+              900: '#4c1d95',
+              indigo: '#4f46e5',
+              violet: '#8b5cf6',
+              blue: '#3b82f6',
+            }
+          },
+          fontFamily: {
+            sans: ['Outfit', 'Inter', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  
+  <style>
+    body {
+      font-family: 'Outfit', 'Inter', sans-serif;
+      background-color: #fafaff;
+      color: #0f0f1b;
+      overflow-x: hidden;
+    }
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.65);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+    .text-gradient {
+      background: linear-gradient(135deg, #4f46e5 0%, #8b5cf6 50%, #3b82f6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .bg-grid-pattern {
+      background-size: 50px 50px;
+      background-image: 
+        linear-gradient(to right, rgba(99, 102, 241, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(99, 102, 241, 0.04) 1px, transparent 1px);
+    }
+    /* Floating Animations */
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+    .animate-float-slow { animation: float 6s ease-in-out infinite; }
+    .animate-float-medium { animation: float 4s ease-in-out infinite; }
+    .animate-float-fast { animation: float 2.5s ease-in-out infinite; }
+    
+    /* Scroll Reveal styles */
+    .reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .reveal.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  </style>
+
+  <!-- React UMD -->
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+  <!-- Babel Standalone for JSX compilation in browser -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+  <div id="root"></div>
+
+  <!-- App implementation -->
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    // --- ICONS (Inline SVGs to bypass UMD module resolution) ---
+    const GraduationCapIcon = () => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6"><path d="M21.42 10.922a1 1 0 0 0-.019-1.838L12.83 5.18a2 2 0 0 0-1.66 0L2.6 9.08a1 1 0 0 0 0 1.832l8.57 3.908a2 2 0 0 0 1.66 0z"/><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/></svg>
+    );
+    const ArrowRightIcon = () => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+    );
+    const MenuIcon = () => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
+    );
+    const XIcon = () => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+    );
+    const SparklesIcon = () => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 text-brand-500 fill-brand-200 animate-pulse"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275Z"/><path d="m5 3 1 2.5L8.5 6 6 7 5 9.5 4 7 1.5 6 4 5Z"/><path d="m19 17 1 2.5 2.5.5-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1Z"/></svg>
+    );
+    const PlayIcon = () => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4 text-slate-500"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+    );
+    const UsersIcon = () => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+    );
+    const BotIcon = () => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+    );
+    const CheckIcon = () => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><path d="M20 6 9 17l-5-5"/></svg>
+    );
+    const BrainIcon = () => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1 0-3.12 3 3 0 0 1 0-4.88 2.5 2.5 0 0 1 0-3.12A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 0-3.12 3 3 0 0 0 0-4.88 2.5 2.5 0 0 0 0-3.12A2.5 2.5 0 0 0 14.5 2Z"/></svg>
+    );
+    const TargetIcon = () => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+    );
+    const LightbulbIcon = () => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .6 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></svg>
+    );
+    const GlobeIcon = () => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+    );
+    const AlertTriangleIcon = () => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-rose-500"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+    );
+    const FlameIcon = () => (
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 text-amber-500 fill-current animate-pulse"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+    );
+
+    // --- Custom Scroll Reveal Hook ---
+    const useScrollReveal = () => {
+      useEffect(() => {
+        const revealElements = document.querySelectorAll('.reveal');
+        const observer = new IntersectionObserver((entries) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('active');
+            }
+          });
+        }, { threshold: 0.1 });
+        
+        revealElements.forEach(el => observer.observe(el));
+        return () => observer.disconnect();
+      }, []);
+    };
+
+    // --- App Component ---
+    function App() {
+      useScrollReveal();
+      const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+      const [isScrolled, setIsScrolled] = useState(false);
+
+      useEffect(() => {
+        const handleScroll = () => {
+          setIsScrolled(window.scrollY > 20);
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+      }, []);
+
+      const handleScrollTo = (e, id) => {
+        e.preventDefault();
+        const target = document.querySelector(id);
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth' });
+        }
+        setIsMobileMenuOpen(false);
+      };
+
+      return (
+        <div className="min-h-screen bg-[#fafaff] font-sans antialiased text-slate-900 selection:bg-brand-500/25 selection:text-brand-900">
+          
+          {/* STICKY NAVBAR */}
+          <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+            isScrolled 
+              ? 'py-3 bg-white/75 backdrop-blur-md border-b border-indigo-100/40 shadow-sm' 
+              : 'py-5 bg-transparent'
+          }`}>
+            <div className="max-w-7xl mx-auto px-6 md:px-12 flex justify-between items-center">
+              <a href="#home" onClick={(e) => handleScrollTo(e, '#home')} className="flex items-center gap-2 group">
+                <div className="bg-gradient-to-tr from-brand-600 to-brand-400 p-2 rounded-xl text-white shadow-md">
+                  <GraduationCapIcon />
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-2xl font-extrabold tracking-tight text-slate-900 group-hover:text-brand-600 transition-colors">
+                    PRIMER
+                  </span>
+                  <span className="text-[10px] text-slate-500 font-medium tracking-wide -mt-1">
+                    Your Personal AI Tutor
+                  </span>
+                </div>
+              </a>
+
+              <div className="hidden md:flex items-center gap-8">
+                <a href="#home" onClick={(e) => handleScrollTo(e, '#home')} className="text-slate-600 hover:text-brand-600 font-medium text-sm transition-colors">Home</a>
+                <a href="#how-it-works" onClick={(e) => handleScrollTo(e, '#how-it-works')} className="text-slate-600 hover:text-brand-600 font-medium text-sm transition-colors">How It Works</a>
+                <a href="#features" onClick={(e) => handleScrollTo(e, '#features')} className="text-slate-600 hover:text-brand-600 font-medium text-sm transition-colors">Features</a>
+                <a href="#why-primer" onClick={(e) => handleScrollTo(e, '#why-primer')} className="text-slate-600 hover:text-brand-600 font-medium text-sm transition-colors">Why PRIMER</a>
+              </div>
+
+              <div className="hidden md:block">
+                <a href="#cta" onClick={(e) => handleScrollTo(e, '#cta')} className="inline-flex items-center gap-2 bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-700 hover:to-brand-600 text-white px-5 py-2.5 rounded-full text-sm font-semibold shadow-md shadow-brand-500/20 hover:shadow-lg transition-all duration-300">
+                  Start Learning <ArrowRightIcon />
+                </a>
+              </div>
+
+              <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden text-slate-600 p-1">
+                {isMobileMenuOpen ? <XIcon /> : <MenuIcon />}
+              </button>
+            </div>
+
+            {/* Mobile Dropdown */}
+            {isMobileMenuOpen && (
+              <div className="absolute top-full left-0 right-0 bg-white border-b border-slate-100 shadow-xl py-6 px-6 flex flex-col gap-4 md:hidden">
+                <a href="#home" onClick={(e) => handleScrollTo(e, '#home')} className="text-slate-700 hover:text-brand-600 font-semibold text-lg py-2 border-b border-slate-50">Home</a>
+                <a href="#how-it-works" onClick={(e) => handleScrollTo(e, '#how-it-works')} className="text-slate-700 hover:text-brand-600 font-semibold text-lg py-2 border-b border-slate-50">How It Works</a>
+                <a href="#features" onClick={(e) => handleScrollTo(e, '#features')} className="text-slate-700 hover:text-brand-600 font-semibold text-lg py-2 border-b border-slate-50">Features</a>
+                <a href="#why-primer" onClick={(e) => handleScrollTo(e, '#why-primer')} className="text-slate-700 hover:text-brand-600 font-semibold text-lg py-2 border-b border-slate-50">Why PRIMER</a>
+                <a href="#cta" onClick={(e) => handleScrollTo(e, '#cta')} className="inline-flex justify-center items-center gap-2 bg-brand-600 text-white py-3.5 rounded-2xl text-base font-semibold shadow-lg">
+                  Start Learning <ArrowRightIcon />
+                </a>
+              </div>
+            )}
+          </nav>
+
+          {/* HERO SECTION */}
+          <section id="home" className="relative min-h-screen pt-28 pb-16 flex items-center bg-grid-pattern overflow-hidden bg-[#fafaff]">
+            <div className="absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full bg-gradient-to-tr from-brand-300/20 to-brand-100/10 blur-[120px] pointer-events-none" />
+            <div className="absolute bottom-[10%] right-[-10%] w-[45%] h-[45%] rounded-full bg-gradient-to-br from-indigo-300/15 to-blue-200/15 blur-[100px] pointer-events-none" />
+
+            <div className="max-w-7xl mx-auto px-6 md:px-12 w-full grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+              <div className="lg:col-span-7 flex flex-col items-start text-left z-10">
+                <div className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-50 border border-indigo-100/50 rounded-full text-brand-700 font-semibold text-xs mb-6 shadow-sm">
+                  <SparklesIcon />
+                  <span>AI-Powered Personalized Learning</span>
+                </div>
+                <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.1] mb-4">
+                  Every child deserves a <span className="text-gradient">personal tutor.</span>
+                </h1>
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-brand-600 mb-6">
+                  Not every parent can afford one.
+                </h2>
+                <p className="text-lg text-slate-600 max-w-xl leading-relaxed mb-8">
+                  PRIMER is an AI-powered personal tutor that understands what your child knows, identifies where they struggle, and adapts every lesson in real-time to their learning pace.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto mb-8">
+                  <a href="#cta" onClick={(e) => handleScrollTo(e, '#cta')} className="inline-flex justify-center items-center gap-2 bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-700 hover:to-brand-600 text-white px-8 py-4 rounded-2xl font-bold shadow-lg shadow-brand-500/25 transition-all duration-300 hover:-translate-y-0.5">
+                    Start Learning Free <ArrowRightIcon />
+                  </a>
+                  <a href="#how-it-works" onClick={(e) => handleScrollTo(e, '#how-it-works')} className="inline-flex justify-center items-center gap-2 bg-white border border-slate-200 text-slate-700 hover:text-brand-600 hover:border-brand-200 px-8 py-4 rounded-2xl font-bold shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+                    <PlayIcon /> See How It Works
+                  </a>
+                </div>
+                <div className="flex flex-wrap items-center gap-y-2 gap-x-6 text-sm text-slate-500 font-medium border-t border-slate-100 pt-6 w-full max-w-xl">
+                  <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-brand-500" /> Learn</span>
+                  <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-brand-400" /> Understand</span>
+                  <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-indigo-500" /> Practice</span>
+                  <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> Improve</span>
+                </div>
+              </div>
+
+              {/* Right Hero illustration */}
+              <div className="lg:col-span-5 relative w-full flex justify-center items-center mt-6 lg:mt-0 select-none">
+                <div className="relative w-full max-w-[480px] aspect-[4/5] rounded-[36px] overflow-hidden shadow-2xl border border-white/60 bg-white">
+                  <img src="public/hero_student_learning.png" alt="Student learning with AI tutor" className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 via-transparent to-transparent pointer-events-none" />
+                  
+                  {/* Card overlay */}
+                  <div className="absolute bottom-6 left-6 right-6 p-5 glass-panel rounded-2xl shadow-2xl border border-white/50">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <h4 className="font-bold text-slate-800 text-base">Hi Aarav 👋</h4>
+                        <p className="text-[11px] text-slate-500 font-medium">Let's learn fractions today.</p>
+                      </div>
+                      <span className="px-2 py-0.5 bg-brand-50 text-[10px] font-bold text-brand-600 rounded-md border border-brand-100">
+                        Level 2
+                      </span>
+                    </div>
+                    <div className="mb-4">
+                      <div className="flex justify-between items-center text-[10px] font-bold text-slate-600 mb-1">
+                        <span>Current Mastery</span>
+                        <span className="text-brand-600">78%</span>
+                      </div>
+                      <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="h-full bg-gradient-to-r from-brand-600 to-indigo-500 rounded-full" style={{ width: '78%' }} />
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between border-t border-indigo-50/50 pt-3">
+                      <div className="flex flex-col">
+                        <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-wider">Today's Goal</span>
+                        <span className="text-[11px] font-bold text-slate-700">Understand equivalent fractions</span>
+                      </div>
+                      <button className="bg-brand-600 text-white p-2 rounded-lg font-bold text-xs flex items-center gap-1.5 shadow-sm">
+                        <span>Continue</span> <ArrowRightIcon />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Floating Badges */}
+                <div className="absolute top-12 -left-6 px-4 py-2.5 bg-white rounded-2xl shadow-lg border border-slate-100 flex items-center gap-2 animate-float-slow">
+                  <span className="text-sm">📚</span>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-slate-800">AI Tutor</span>
+                    <span className="text-[9px] text-emerald-500 font-bold">Online & Active</span>
+                  </div>
+                </div>
+                <div className="absolute -right-4 top-1/3 px-4 py-2.5 bg-white rounded-2xl shadow-lg border border-slate-100 flex items-center gap-2 animate-float-medium">
+                  <span className="text-sm">⭐</span>
+                  <div className="flex flex-col">
+                    <span className="text-[10px] text-slate-400 font-semibold uppercase">Progress</span>
+                    <span className="text-xs font-extrabold text-slate-800">78% Mastery</span>
+                  </div>
+                </div>
+                <div className="absolute bottom-40 -left-6 px-4 py-2.5 bg-white rounded-2xl shadow-lg border border-slate-100 flex items-center gap-2 animate-float-fast">
+                  <span className="text-sm">🏆</span>
+                  <span className="text-xs font-bold text-slate-800">+12 Concepts</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* PROBLEM SECTION */}
+          <section id="problem" className="py-24 bg-white relative overflow-hidden reveal">
+            <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10">
+              <div className="text-center max-w-3xl mx-auto mb-16">
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight mb-4">
+                  Education shouldn't depend on <span className="text-gradient">how much you can spend.</span>
+                </h2>
+                <p className="text-lg text-slate-600 leading-relaxed">
+                  From KG to Class 12, families can spend lakhs on private tuition. Yet traditional classrooms fail to give every child continuous, personalized attention.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-11 gap-8 items-center">
+                <div className="lg:col-span-5 bg-slate-50 border border-slate-200/60 rounded-3xl p-8 shadow-sm">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="bg-slate-200 text-slate-700 p-2.5 rounded-2xl"><UsersIcon /></div>
+                    <div>
+                      <h3 className="text-xl font-bold text-slate-800">Traditional Classroom</h3>
+                      <p className="text-xs text-slate-500 font-semibold uppercase">One-to-Many Model</p>
+                    </div>
+                  </div>
+                  <div className="bg-white border border-slate-100 rounded-2xl p-6 mb-6 flex flex-col items-center">
+                    <span className="text-3xl mb-1">👨‍🏫</span>
+                    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">1 Teacher</span>
+                    <span className="text-xl text-slate-300 py-1">↓</span>
+                    <div className="flex flex-wrap justify-center gap-2 max-w-[280px]">
+                      {['👦','👧','👦','👧','👦','👦','👧','👦','👧'].map((emoji, i) => (
+                        <span key={i} className="text-xl">{emoji}</span>
+                      ))}
+                    </div>
+                    <span className="text-xs font-bold text-slate-500 mt-2">40+ Students</span>
+                  </div>
+                  <div className="space-y-3.5">
+                    {[
+                      'Same teaching pace for everyone',
+                      'Same lesson, regardless of understanding gaps',
+                      'Extremely limited individual attention',
+                      'Fear of asking doubts in front of others',
+                      'High cost makes quality tuition a luxury'
+                    ].map((point, i) => (
+                      <div key={i} className="flex items-start gap-3">
+                        <span className="text-red-500 font-bold">✕</span>
+                        <span className="text-slate-600 text-sm font-medium">{point}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="lg:col-span-1 flex flex-col justify-center items-center py-4 lg:py-0">
+                  <div className="h-10 w-10 rounded-full bg-indigo-50 border border-indigo-100/60 flex items-center justify-center font-bold text-indigo-600 shadow-sm">VS</div>
+                </div>
+
+                <div className="lg:col-span-5 bg-gradient-to-br from-indigo-900 via-indigo-950 to-slate-950 text-white rounded-3xl p-8 shadow-xl border border-slate-800/80">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="bg-brand-500 text-white p-2.5 rounded-2xl"><BotIcon /></div>
+                    <div>
+                      <h3 className="text-xl font-bold">PRIMER AI Tutor</h3>
+                      <p className="text-xs text-brand-400 font-semibold uppercase tracking-wider">One-to-One Model</p>
+                    </div>
+                  </div>
+                  <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-6 flex flex-col items-center">
+                    <div className="flex items-center justify-center gap-8 w-full">
+                      <div className="flex flex-col items-center">
+                        <span className="text-3xl">👦</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase mt-1">1 Student</span>
+                      </div>
+                      <span className="text-brand-400">→</span>
+                      <div className="flex flex-col items-center">
+                        <div className="bg-brand-600 p-2 rounded-xl text-white"><BotIcon /></div>
+                        <span className="text-[10px] font-bold text-brand-400 uppercase mt-1">AI Tutor</span>
+                      </div>
+                    </div>
+                    <div className="w-full h-[1px] bg-white/10 my-4" />
+                    <div className="flex flex-wrap justify-center gap-2">
+                      <span className="px-2.5 py-1 bg-white/10 text-white border border-white/5 rounded-full text-[10px] font-semibold">Personalized Path</span>
+                      <span className="px-2.5 py-1 bg-white/10 text-white border border-white/5 rounded-full text-[10px] font-semibold">Adaptive Difficulty</span>
+                      <span className="px-2.5 py-1 bg-white/10 text-white border border-white/5 rounded-full text-[10px] font-semibold">Continuous Feedback</span>
+                    </div>
+                  </div>
+                  <div className="space-y-3.5">
+                    {[
+                      'Adjusts pace perfectly to the student',
+                      'Identifies weaknesses and adapts in real-time',
+                      'Gives full, undivided one-to-one attention',
+                      'Safe space to make mistakes and learn',
+                      'Highly affordable, high-quality tutoring'
+                    ].map((point, i) => (
+                      <div key={i} className="flex items-start gap-3">
+                        <span className="text-emerald-400 font-bold">✓</span>
+                        <span className="text-slate-300 text-sm font-medium">{point}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* FEATURES SECTION */}
+          <section id="features" className="py-24 bg-[#fafaff] relative overflow-hidden reveal">
+            <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10">
+              <div className="text-center max-w-3xl mx-auto mb-20">
+                <span className="text-xs font-extrabold text-brand-600 uppercase tracking-widest bg-brand-50 px-3 py-1.5 rounded-full border border-brand-100">Supercharged Capabilities</span>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight mt-4">
+                  Everything a <span className="text-gradient">personal tutor</span> should do.
+                </h2>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Feature 1 */}
+                <div className="bg-white border border-slate-100 hover:border-brand-100 rounded-3xl p-8 shadow-sm flex flex-col justify-between transition-colors">
+                  <div>
+                    <div className="bg-brand-50 text-brand-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-6"><BrainIcon /></div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">Learn at your level</h3>
+                    <p className="text-slate-600 text-sm leading-relaxed mb-6">PRIMER adjusts lesson difficulty based on performance. If you struggle, it slows down. If ready, it moves ahead.</p>
+                  </div>
+                  <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 mt-4">
+                    <div className="flex justify-between items-center relative py-4">
+                      <div className="absolute left-4 right-4 top-1/2 -translate-y-1/2 h-[3px] bg-slate-200" />
+                      <div className="absolute left-4 right-1/2 top-1/2 -translate-y-1/2 h-[3px] bg-brand-500" />
+                      <div className="z-10 flex flex-col items-center"><div className="w-8 h-8 rounded-full bg-brand-500 text-white font-bold text-xs flex items-center justify-center shadow-md">Easy</div></div>
+                      <div className="z-10 flex flex-col items-center relative">
+                        <div className="absolute -top-7 px-2 py-0.5 bg-brand-600 text-[9px] text-white font-extrabold rounded shadow-sm">Your Level</div>
+                        <div className="w-9 h-9 rounded-full bg-brand-600 text-white font-bold text-xs flex items-center justify-center border-4 border-white shadow-md">Medium</div>
+                      </div>
+                      <div className="z-10 flex flex-col items-center"><div className="w-8 h-8 rounded-full bg-white text-slate-400 font-bold text-xs flex items-center justify-center border-2 border-slate-200">Hard</div></div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Feature 2 */}
+                <div className="bg-white border border-slate-100 hover:border-brand-100 rounded-3xl p-8 shadow-sm flex flex-col justify-between transition-colors">
+                  <div>
+                    <div className="bg-indigo-50 text-indigo-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-6"><TargetIcon /></div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">Your learning path is unique</h3>
+                    <p className="text-slate-600 text-sm leading-relaxed mb-6">PRIMER tracks strengths, mistakes and gaps to customize the learning pathway instead of pushing a rigid class schedule.</p>
+                  </div>
+                  <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 mt-4 space-y-3.5">
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-extrabold text-slate-400 w-16 uppercase">Student A:</span>
+                      <div className="flex items-center gap-1.5 flex-1">
+                        <span className="px-2 py-1 bg-slate-200 text-slate-600 rounded-lg text-[10px] font-semibold">Basics</span>
+                        <span className="text-slate-400">→</span>
+                        <span className="px-2 py-1 bg-brand-100 text-brand-700 rounded-lg text-[10px] font-bold">Practice</span>
+                        <span className="text-slate-400">→</span>
+                        <span className="px-2 py-1 bg-violet/10 text-violet rounded-lg text-[10px] font-bold">Remediation</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span className="text-[10px] font-extrabold text-slate-400 w-16 uppercase">Student B:</span>
+                      <div className="flex items-center gap-1.5 flex-1">
+                        <span className="px-2 py-1 bg-slate-200 text-slate-600 rounded-lg text-[10px] font-semibold">Basics</span>
+                        <span className="text-slate-400">→</span>
+                        <span className="px-2 py-1 bg-blue/10 text-blue rounded-lg text-[10px] font-bold">Challenge</span>
+                        <span className="text-slate-400">→</span>
+                        <span className="px-2 py-1 bg-indigo-600 text-white rounded-lg text-[10px] font-bold">Advanced</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Feature 3 */}
+                <div className="bg-white border border-slate-100 hover:border-brand-100 rounded-3xl p-8 shadow-sm flex flex-col justify-between transition-colors">
+                  <div>
+                    <div className="bg-violet/10 text-violet w-12 h-12 rounded-2xl flex items-center justify-center mb-6"><LightbulbIcon /></div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">We care about understanding</h3>
+                    <p className="text-slate-600 text-sm leading-relaxed mb-6">Instead of just marking true or false, PRIMER asks "Why?" to ensure students truly grasp the underlying concepts.</p>
+                  </div>
+                  <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 mt-4">
+                    <div className="flex items-center justify-between gap-2 max-w-md mx-auto">
+                      <div className="flex flex-col items-center">
+                        <span className="p-2 bg-slate-200 text-slate-600 rounded-xl text-xs">❓</span>
+                        <span className="text-[9px] font-bold text-slate-500 uppercase mt-1">Question</span>
+                      </div>
+                      <span className="text-slate-300">→</span>
+                      <div className="flex flex-col items-center">
+                        <span className="p-2 bg-emerald-50 text-emerald-600 rounded-xl border border-emerald-100 text-xs">✓</span>
+                        <span className="text-[9px] font-bold text-slate-500 uppercase mt-1">Answer ✓</span>
+                      </div>
+                      <span className="text-slate-300">→</span>
+                      <div className="flex flex-col items-center">
+                        <div className="p-2 bg-brand-50 text-brand-600 rounded-xl border border-brand-100 font-bold text-[10px] w-9 h-9 flex items-center justify-center">Why?</div>
+                        <span className="text-[9px] font-bold text-slate-500 uppercase mt-1">Check</span>
+                      </div>
+                      <span className="text-slate-300">→</span>
+                      <div className="flex flex-col items-center">
+                        <span className="p-2 bg-indigo-600 text-white rounded-xl text-xs">💡</span>
+                        <span className="text-[9px] font-bold text-brand-600 uppercase mt-1">Mastery</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Feature 4 */}
+                <div className="bg-white border border-slate-100 hover:border-brand-100 rounded-3xl p-8 shadow-sm flex flex-col justify-between transition-colors">
+                  <div>
+                    <div className="bg-blue/10 text-blue-600 w-12 h-12 rounded-2xl flex items-center justify-center mb-6"><GlobeIcon /></div>
+                    <h3 className="text-xl font-bold text-slate-900 mb-2">Learn in the language you understand</h3>
+                    <p className="text-slate-600 text-sm leading-relaxed mb-6">Supports English and regional languages so language doesn't become a barrier to learning core concepts.</p>
+                  </div>
+                  <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 mt-4">
+                    <div className="flex justify-between items-center gap-3">
+                      <div className="flex flex-wrap gap-2 max-w-[200px]">
+                        <span className="px-3 py-1.5 bg-white border border-slate-100 text-slate-700 font-semibold rounded-xl text-xs shadow-sm">English</span>
+                        <span className="px-3 py-1.5 bg-brand-50 border border-brand-100 text-brand-700 font-bold rounded-xl text-xs shadow-sm">हिन्दी</span>
+                        <span className="px-3 py-1.5 bg-white border border-slate-100 text-slate-700 font-semibold rounded-xl text-xs shadow-sm">తెలుగు</span>
+                      </div>
+                      <div className="flex items-center gap-1.5 bg-white border border-slate-100 rounded-2xl p-2.5 shadow-sm">
+                        <span>🤖</span>
+                        <span className="text-[9px] font-bold text-slate-500 uppercase leading-none">Multi-lingual<br />Tutor Mode</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* HOW IT WORKS */}
+          <section id="how-it-works" className="py-24 bg-white relative overflow-hidden reveal">
+            <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10">
+              <div className="text-center max-w-3xl mx-auto mb-20">
+                <span className="text-xs font-extrabold text-brand-600 uppercase tracking-widest bg-brand-50 px-3 py-1.5 rounded-full border border-brand-100">Our Method</span>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight mt-4">
+                  Your learning journey, <span className="text-gradient">personalized.</span>
+                </h2>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 relative">
+                <div className="hidden lg:block absolute top-[52px] left-[10%] right-[10%] h-[3px] bg-gradient-to-r from-blue-300 via-indigo-300 to-emerald-300 pointer-events-none" />
+                
+                {[
+                  { num: '01', title: 'Discover', desc: 'Choose a subject or math/science topic.', color: 'bg-blue/10 text-blue-600 border-blue-200/50', icon: '🔍' },
+                  { num: '02', title: 'Understand', desc: 'PRIMER assesses your current gaps first.', color: 'bg-indigo-50 text-brand-600 border-indigo-100/50', icon: '🧭' },
+                  { num: '03', title: 'Learn', desc: 'Visual AI explanations at your level.', color: 'bg-violet/10 text-violet border-violet-200/50', icon: '📖' },
+                  { num: '04', title: 'Adapt', desc: 'Pace changes dynamically with each answer.', color: 'bg-amber-50 text-amber-600 border-amber-200/50', icon: '🔀' },
+                  { num: '05', title: 'Master', desc: 'Confirms understanding before moving on.', color: 'bg-emerald-50 text-emerald-600 border-emerald-200/50', icon: '✓' }
+                ].map((step, i) => (
+                  <div key={i} className="flex flex-col items-center text-center relative z-10 group">
+                    <div className={`w-24 h-24 rounded-full flex items-center justify-center border-4 border-white shadow-lg ${step.color} relative transition-transform duration-300 hover:scale-105`}>
+                      <span className="absolute -top-1.5 -right-1.5 bg-slate-900 text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full shadow-sm">{step.num}</span>
+                      <span className="text-3xl">{step.icon}</span>
+                    </div>
+                    <div className="mt-6 flex flex-col items-center">
+                      <h3 className="text-lg font-bold text-slate-900">{step.title}</h3>
+                      <p className="text-slate-500 text-sm mt-2 max-w-[180px] leading-relaxed">{step.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* KEY DEMO - STUDENT COMPARISON */}
+          <section id="demo" className="py-24 bg-[#fafaff] relative overflow-hidden reveal">
+            <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10">
+              <div className="text-center max-w-3xl mx-auto mb-16">
+                <span className="text-xs font-extrabold text-brand-600 uppercase tracking-widest bg-brand-50 px-3 py-1.5 rounded-full border border-brand-100">Real-time Personalization</span>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight mt-4">
+                  Same topic. Different students.<br />
+                  <span className="text-gradient">Different learning paths.</span>
+                </h2>
+                <p className="text-lg text-slate-600 mt-4 leading-relaxed">PRIMER adjusts teaching methods in real-time according to student needs.</p>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                {/* Student A Card - Ananya */}
+                <div className="bg-white border border-slate-200/50 rounded-3xl p-8 shadow-md">
+                  <div className="flex justify-between items-start mb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-rose-50 rounded-2xl flex items-center justify-center text-rose-500 font-bold text-lg border border-rose-100">A</div>
+                      <div>
+                        <h3 className="text-xl font-bold text-slate-900">Ananya</h3>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="text-xs text-slate-500 font-semibold">Topic:</span>
+                          <span className="px-2 py-0.5 bg-slate-100 text-slate-700 text-[10px] font-bold rounded">Fractions</span>
+                        </div>
+                      </div>
+                    </div>
+                    <span className="px-3 py-1 bg-rose-50 border border-rose-100 text-rose-600 text-xs font-bold rounded-full">Needs Support</span>
+                  </div>
+
+                  <div className="bg-rose-50/70 border border-rose-100/50 rounded-2xl p-4 mb-6 flex items-start gap-3">
+                    <div className="shrink-0 mt-0.5"><AlertTriangleIcon /></div>
+                    <div>
+                      <h4 className="text-sm font-bold text-rose-900">Concept Weakness Detected</h4>
+                      <p className="text-xs text-rose-700 mt-0.5">Confuses numerator & denominator in fractional layouts.</p>
+                    </div>
+                  </div>
+
+                  <div className="mb-8">
+                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">PRIMER Responds:</h4>
+                    <div className="space-y-3 relative before:absolute before:left-[17px] before:top-2 before:bottom-2 before:w-[2px] before:bg-rose-100">
+                      {[
+                        { title: 'Simple concept explanation', desc: 'Breaks down terms with visual fruit slices.' },
+                        { title: 'Interactive visual example', desc: 'Allows dragging blocks to match fractions.' },
+                        { title: 'Easy practice checks', desc: 'Validates concepts with simple visual answers.' },
+                        { title: 'Recheck understanding', desc: 'Asks Aarav to explain numerator vs denominator.' }
+                      ].map((step, idx) => (
+                        <div key={idx} className="flex items-start gap-4 relative z-10">
+                          <div className="w-[36px] h-[36px] bg-white border-2 border-rose-300 rounded-full flex items-center justify-center font-bold text-xs text-rose-500 shadow-sm shrink-0">{idx + 1}</div>
+                          <div className="bg-slate-50 border border-slate-100 rounded-xl p-3.5 flex-1">
+                            <h5 className="text-sm font-bold text-slate-800 leading-none">{step.title}</h5>
+                            <p className="text-xs text-slate-500 mt-1 leading-snug">{step.desc}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="border-t border-slate-100 pt-6">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-xs font-bold text-slate-500 uppercase">Lesson Mastery</span>
+                      <span className="text-sm font-extrabold text-slate-800 flex items-center gap-1">
+                        <span className="text-rose-500">42%</span> ➜ <span className="text-brand-600">57%</span>
+                      </span>
+                    </div>
+                    <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden flex">
+                      <div className="h-full bg-rose-400 rounded-l-full" style={{ width: '42%' }} />
+                      <div className="h-full bg-gradient-to-r from-rose-400 to-brand-500" style={{ width: '15%' }} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Student B Card - Arjun */}
+                <div className="bg-white border border-slate-200/50 rounded-3xl p-8 shadow-md">
+                  <div className="flex justify-between items-start mb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-500 font-bold text-lg border border-emerald-100">B</div>
+                      <div>
+                        <h3 className="text-xl font-bold text-slate-900">Arjun</h3>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="text-xs text-slate-500 font-semibold">Topic:</span>
+                          <span className="px-2 py-0.5 bg-slate-100 text-slate-700 text-[10px] font-bold rounded">Fractions</span>
+                        </div>
+                      </div>
+                    </div>
+                    <span className="px-3 py-1 bg-emerald-50 border border-emerald-100 text-emerald-600 text-xs font-bold rounded-full">Ready for Challenge</span>
+                  </div>
+
+                  <div className="bg-emerald-50/70 border border-emerald-100/50 rounded-2xl p-4 mb-6 flex items-start gap-3">
+                    <span className="text-emerald-500 shrink-0 text-lg">✓</span>
+                    <div>
+                      <h4 className="text-sm font-bold text-emerald-900">Basics Verified</h4>
+                      <p className="text-xs text-emerald-700 mt-0.5">Strong fundamentals. 100% score on introductory quiz.</p>
+                    </div>
+                  </div>
+
+                  <div className="mb-8">
+                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">PRIMER Responds:</h4>
+                    <div className="space-y-3 relative before:absolute before:left-[17px] before:top-2 before:bottom-2 before:w-[2px] before:bg-emerald-100">
+                      {[
+                        { title: 'Skip introductory basics', desc: 'Skips basic lessons to avoid boredom.' },
+                        { title: 'Equivalent fractions challenge', desc: 'Introduces equations like a/b = c/d.' },
+                        { title: 'Real-world word problems', desc: 'Asks to compute remaining pizza portions in recipes.' },
+                        { title: 'Advanced challenge unlock', desc: 'Loads algebraic fractions quiz problems.' }
+                      ].map((step, idx) => (
+                        <div key={idx} className="flex items-start gap-4 relative z-10">
+                          <div className="w-[36px] h-[36px] bg-white border-2 border-emerald-300 rounded-full flex items-center justify-center font-bold text-xs text-emerald-500 shadow-sm shrink-0">{idx + 1}</div>
+                          <div className="bg-slate-50 border border-slate-100 rounded-xl p-3.5 flex-1">
+                            <h5 className="text-sm font-bold text-slate-800 leading-none">{step.title}</h5>
+                            <p className="text-xs text-slate-500 mt-1 leading-snug">{step.desc}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="border-t border-slate-100 pt-6">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="text-xs font-bold text-slate-500 uppercase">Lesson Mastery</span>
+                      <span className="text-sm font-extrabold text-slate-800 flex items-center gap-1">
+                        <span className="text-emerald-500">81%</span> ➜ <span className="text-brand-600">91%</span>
+                      </span>
+                    </div>
+                    <div className="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden flex">
+                      <div className="h-full bg-emerald-400 rounded-l-full" style={{ width: '81%' }} />
+                      <div className="h-full bg-gradient-to-r from-emerald-400 to-brand-500" style={{ width: '10%' }} />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-16 text-center">
+                <div className="inline-flex items-center gap-2 px-5 py-3 bg-indigo-50/50 border border-indigo-100/40 rounded-2xl">
+                  <span>✨</span>
+                  <span className="text-sm font-bold text-indigo-950">Same tutor. Different learning paths.</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* PROGRESS DASHBOARD */}
+          <section id="dashboard" className="py-24 bg-white relative overflow-hidden reveal">
+            <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10">
+              <div className="text-center max-w-3xl mx-auto mb-16">
+                <span className="text-xs font-extrabold text-brand-600 uppercase tracking-widest bg-brand-50 px-3 py-1.5 rounded-full border border-brand-100">Student Dashboard</span>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight mt-4">
+                  Watch your <span className="text-gradient">understanding grow.</span>
+                </h2>
+                <p className="text-lg text-slate-600 mt-4 leading-relaxed">Trace active concept strengths, weekly streaks, and learning milestones.</p>
+              </div>
+
+              <div className="bg-slate-900 text-white rounded-[32px] p-6 sm:p-10 shadow-2xl border border-slate-800 relative overflow-hidden max-w-5xl mx-auto">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-800 pb-6 mb-8">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-lg">👋</div>
+                    <div>
+                      <h3 className="text-lg sm:text-xl font-bold">Good evening, Aarav</h3>
+                      <p className="text-xs text-slate-400 font-medium">Ready to continue your learning sprint?</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 px-4 py-2 rounded-2xl">
+                    <FlameIcon />
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold text-amber-400 leading-none">7 Day Streak</span>
+                      <span className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider mt-0.5">Active Study</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+                  <div className="lg:col-span-7 space-y-8">
+                    <div className="bg-slate-800/40 border border-slate-800 rounded-2xl p-6">
+                      <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-5 flex items-center gap-2">📈 Your Learning Progress</h4>
+                      <div className="space-y-4">
+                        {[
+                          { subject: 'Mathematics', percent: 78, color: 'bg-brand-500' },
+                          { subject: 'Science', percent: 64, color: 'bg-blue-500' },
+                          { subject: 'English', percent: 91, color: 'bg-violet' },
+                        ].map((sub, idx) => (
+                          <div key={idx} className="space-y-1.5">
+                            <div className="flex justify-between items-center text-sm font-semibold">
+                              <span className="text-slate-200">{sub.subject}</span>
+                              <span className="text-slate-400">{sub.percent}%</span>
+                            </div>
+                            <div className="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
+                              <div className={`h-full ${sub.color} rounded-full`} style={{ width: `${sub.percent}%` }} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-800/40 border border-slate-800 rounded-2xl p-6">
+                      <div className="flex justify-between items-center mb-6">
+                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">📅 Weekly Mastery Timeline</h4>
+                        <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">+18% growth</span>
+                      </div>
+                      <div className="h-32 w-full relative pt-4">
+                        <div className="absolute inset-x-0 top-0 border-t border-slate-800/60" />
+                        <div className="absolute inset-x-0 top-1/2 border-t border-slate-800/60" />
+                        <div className="absolute inset-x-0 bottom-0 border-t border-slate-800/60" />
+                        <svg viewBox="0 0 100 30" className="w-full h-full overflow-visible" preserveAspectRatio="none">
+                          <defs>
+                            <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0.3" />
+                              <stop offset="100%" stopColor="#8b5cf6" stopOpacity="0.0" />
+                            </linearGradient>
+                          </defs>
+                          <path d="M 0 30 L 0 20 L 16.6 15 L 33.2 12 L 49.8 10 L 66.4 8 L 83 5 L 100 2 L 100 30 Z" fill="url(#chartGradient)" />
+                          <path d="M 0 20 L 16.6 15 L 33.2 12 L 49.8 10 L 66.4 8 L 83 5 L 100 2" fill="none" stroke="#8b5cf6" strokeWidth="1.5" strokeLinecap="round" />
+                        </svg>
+                      </div>
+                      <div className="flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase mt-3">
+                        <span>Mon</span><span>Wed</span><span>Fri</span><span>Sun</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="lg:col-span-5 space-y-6">
+                    <div className="bg-gradient-to-tr from-brand-600/20 to-violet/20 border border-brand-500/20 rounded-2xl p-6 flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Mastery</span>
+                        <h4 className="text-2xl font-black mt-1">24 Concepts</h4>
+                        <p className="text-[10px] text-slate-400 font-semibold mt-1">Verified on curriculum goals</p>
+                      </div>
+                      <div className="bg-brand-500 p-3 rounded-2xl text-white shadow-md">🏆</div>
+                    </div>
+
+                    <div className="bg-slate-800/40 border border-slate-800 rounded-2xl p-6">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">🎯 Today's Goal</span>
+                      <div className="mt-4 p-4 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-between">
+                        <div>
+                          <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider">Topic</h5>
+                          <h6 className="text-sm font-bold text-slate-100 mt-1">Equivalent Fractions</h6>
+                        </div>
+                        <button className="p-2 bg-brand-500 text-white rounded-lg"><ArrowRightIcon /></button>
+                      </div>
+                    </div>
+
+                    <div className="bg-slate-800/40 border border-slate-800 rounded-2xl p-6">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1.5">⚠ Needs Practice</span>
+                      <div className="mt-4 space-y-2.5">
+                        {[
+                          { topic: 'Fractions', reason: 'Numerator/Denominator mixup', badge: 'Math' },
+                          { topic: 'Algebra', reason: 'Evaluating expressions', badge: 'Math' },
+                        ].map((item, idx) => (
+                          <div key={idx} className="flex justify-between items-center p-3 bg-slate-900 border border-slate-800 rounded-xl">
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <h5 className="text-xs font-bold text-slate-200">{item.topic}</h5>
+                                <span className="px-1.5 py-0.5 bg-slate-800 text-[8px] font-bold rounded text-slate-400 border border-slate-700/60 uppercase">{item.badge}</span>
+                              </div>
+                              <p className="text-[10px] text-slate-500 mt-1 font-medium">{item.reason}</p>
+                            </div>
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* WHY PRIMER */}
+          <section id="why-primer" className="py-24 bg-[#fafaff] relative overflow-hidden reveal">
+            <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10">
+              <div className="text-center max-w-3xl mx-auto mb-20">
+                <span className="text-xs font-extrabold text-brand-600 uppercase tracking-widest bg-brand-50 px-3 py-1.5 rounded-full border border-brand-100">Feature Comparison</span>
+                <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight mt-4">
+                  A personal tutor shouldn't be a <span className="text-gradient">luxury.</span>
+                </h2>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-stretch max-w-5xl mx-auto">
+                {/* Traditional Card */}
+                <div className="bg-white border border-slate-200/50 rounded-3xl p-8 shadow-sm flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-6">
+                      <span className="text-2xl">🏫</span>
+                      <div>
+                        <h3 className="text-xl font-bold text-slate-800">Traditional Tuition</h3>
+                        <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Group classes & Centers</p>
+                      </div>
+                    </div>
+                    <div className="space-y-5 border-t border-slate-100 pt-6">
+                      {[
+                        { f: 'Teaching Pace', d: 'Fixed class pace (students get left behind)' },
+                        { f: 'Attention', d: '1 teacher for 40+ students' },
+                        { f: 'Availability', d: 'Scheduled hours (usually 1-2 hours/week)' },
+                        { f: 'Explanations', d: 'Single explanation method for everyone' },
+                        { f: 'Affordability', d: 'Lakhs spent per year on tuition fees' },
+                      ].map((item, idx) => (
+                        <div key={idx} className="flex gap-3">
+                          <span className="text-red-500 font-bold">✕</span>
+                          <div>
+                            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider">{item.f}</h4>
+                            <p className="text-slate-600 text-sm font-semibold mt-0.5">{item.d}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* PRIMER Card */}
+                <div className="bg-gradient-to-br from-indigo-600 to-brand-600 text-white rounded-3xl p-8 shadow-xl shadow-brand-500/25 border border-brand-500 flex flex-col justify-between relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
+                  <div>
+                    <div className="flex justify-between items-start mb-6">
+                      <div className="flex items-center gap-2">
+                        <div className="bg-white/10 p-2 rounded-xl text-white">✨</div>
+                        <div>
+                          <h3 className="text-xl font-bold">PRIMER AI Tutor</h3>
+                          <p className="text-[10px] text-indigo-200 font-semibold uppercase tracking-wider">Continuous Personal Coach</p>
+                        </div>
+                      </div>
+                      <span className="px-2.5 py-1 bg-white/20 border border-white/20 text-[10px] font-extrabold rounded-full uppercase">Highly Recommended</span>
+                    </div>
+                    <div className="space-y-5 border-t border-white/10 pt-6">
+                      {[
+                        { f: 'Teaching Pace', d: 'Fully adaptive pace (waits until you understand)' },
+                        { f: 'Attention', d: 'Undivided 1:1 active attention' },
+                        { f: 'Availability', d: '24/7 availability, whenever curiosity strikes' },
+                        { f: 'Explanations', d: 'Tailored explanations (visual, textual, analogies)' },
+                        { f: 'Affordability', d: 'Highly affordable (free to start learning)' },
+                      ].map((item, idx) => (
+                        <div key={idx} className="flex gap-3">
+                          <span className="text-emerald-300 font-bold">✓</span>
+                          <div>
+                            <h4 className="text-xs font-bold text-indigo-200 uppercase tracking-wider">{item.f}</h4>
+                            <p className="text-white text-sm font-semibold mt-0.5">{item.d}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* VISION SECTION */}
+          <section id="vision" className="py-24 bg-white relative overflow-hidden reveal">
+            <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+              <div className="lg:col-span-6 space-y-8">
+                <div>
+                  <span className="text-xs font-extrabold text-brand-600 uppercase tracking-widest bg-brand-50 px-3 py-1.5 rounded-full border border-brand-100">Our Vision</span>
+                  <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight mt-4">
+                    What if every child had a <span className="text-gradient">personal tutor?</span>
+                  </h2>
+                  <p className="text-lg text-slate-600 mt-5 leading-relaxed">
+                    Imagine a student who can ask questions anytime without hesitation, learn without the fear of making mistakes, and move ahead whenever they are ready.
+                  </p>
+                </div>
+
+                <div className="bg-slate-50 border border-slate-100 rounded-3xl p-6">
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-6">The Loop of Mastery:</h3>
+                  <div className="flex flex-wrap items-center justify-between gap-y-6 gap-x-2">
+                    {['Ask', 'Learn', 'Practice', 'Understand', 'Improve'].map((label, idx) => (
+                      <div key={idx} className="flex items-center gap-2">
+                        <div className="flex flex-col items-center">
+                          <div className="w-11 h-11 rounded-2xl bg-indigo-50 border border-indigo-100/50 flex items-center justify-center font-bold text-brand-600 shadow-sm">{idx + 1}</div>
+                          <span className="text-xs font-bold text-slate-700 mt-2">{label}</span>
+                        </div>
+                        {idx < 4 && <span className="text-slate-300 font-bold text-lg hidden sm:block mb-6 ml-1">→</span>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="bg-gradient-to-r from-brand-600 to-indigo-600 text-white rounded-2xl p-6 shadow-md relative overflow-hidden">
+                  <p className="text-base font-bold leading-relaxed">"Our vision is simple: make personalized education accessible to every child."</p>
+                </div>
+              </div>
+
+              <div className="lg:col-span-6 flex justify-center items-center select-none">
+                <div className="relative w-full max-w-[500px] aspect-[4/3] rounded-[32px] overflow-hidden shadow-2xl border border-slate-200/50 bg-white">
+                  <img src="public/vision_tutor_concept.png" alt="Vision of adaptive learning" className="w-full h-full object-cover" />
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* FINAL CTA */}
+          <section id="cta" className="py-20 bg-white relative overflow-hidden reveal">
+            <div className="max-w-6xl mx-auto px-6 md:px-12 relative z-10">
+              <div className="bg-gradient-to-tr from-indigo-900 via-indigo-950 to-slate-950 text-white rounded-[40px] p-8 sm:p-16 text-center border border-slate-800 shadow-2xl relative overflow-hidden">
+                <div className="absolute top-[-30%] left-[-20%] w-[60%] h-[60%] rounded-full bg-brand-500/20 blur-[100px] pointer-events-none" />
+                <div className="absolute bottom-[-30%] right-[-20%] w-[60%] h-[60%] rounded-full bg-indigo-500/20 blur-[100px] pointer-events-none" />
+                
+                <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-white/10 border border-white/10 rounded-full text-brand-300 font-bold text-xs mb-8">
+                  <span>✨</span> <span>Beta Release</span>
+                </div>
+
+                <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight leading-[1.15] max-w-3xl mx-auto mb-6">
+                  Your learning journey starts here.
+                </h2>
+                <p className="text-base sm:text-lg text-indigo-200/80 max-w-xl mx-auto mb-10 font-semibold leading-relaxed">
+                  Learn at your pace. Learn your way. Learn with PRIMER. Give your child the personal AI tutor they deserve.
+                </p>
+
+                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                  <a href="#home" onClick={(e) => handleScrollTo(e, '#home')} className="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-gradient-to-r from-brand-500 to-brand-600 text-white px-8 py-4 rounded-2xl font-bold shadow-lg">
+                    Start Learning — It's Free <ArrowRightIcon />
+                  </a>
+                  <a href="#home" onClick={(e) => handleScrollTo(e, '#home')} className="w-full sm:w-auto inline-flex justify-center items-center gap-2 bg-white/5 border border-white/15 text-white px-8 py-4 rounded-2xl font-bold">
+                    Explore PRIMER
+                  </a>
+                </div>
+                <div className="mt-8 text-[11px] text-slate-500 font-semibold uppercase tracking-widest">
+                  100% Free prototype for Hackathon Demo
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* FOOTER */}
+          <footer className="bg-slate-950 text-white border-t border-slate-900 py-16">
+            <div className="max-w-7xl mx-auto px-6 md:px-12 grid grid-cols-1 md:grid-cols-12 gap-10">
+              <div className="md:col-span-5 space-y-4">
+                <div className="flex items-center gap-2">
+                  <div className="bg-gradient-to-tr from-brand-600 to-brand-400 p-2 rounded-xl text-white shadow-md"><GraduationCapIcon /></div>
+                  <span className="text-xl font-black tracking-tight">PRIMER</span>
+                </div>
+                <p className="text-sm text-slate-400 max-w-sm leading-relaxed">Making premium, individualized learning accessible and affordable to every KG-12 student.</p>
+              </div>
+
+              <div className="md:col-span-7 grid grid-cols-2 sm:grid-cols-3 gap-8">
+                <div className="space-y-4">
+                  <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Product</h4>
+                  <div className="flex flex-col gap-2.5">
+                    <a href="#home" onClick={(e) => handleScrollTo(e, '#home')} className="text-slate-400 hover:text-white text-sm">Home</a>
+                    <a href="#how-it-works" onClick={(e) => handleScrollTo(e, '#how-it-works')} className="text-slate-400 hover:text-white text-sm">How It Works</a>
+                    <a href="#features" onClick={(e) => handleScrollTo(e, '#features')} className="text-slate-400 hover:text-white text-sm">Features</a>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Legal</h4>
+                  <div className="flex flex-col gap-2.5">
+                    <span className="text-slate-400 text-sm">Privacy Policy</span>
+                    <span className="text-slate-400 text-sm">Terms of Use</span>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Connect</h4>
+                  <div className="flex flex-col gap-2.5">
+                    <span className="text-slate-400 text-sm">hello@primer.ai</span>
+                    <span className="text-slate-400 text-sm">Twitter / X</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="max-w-7xl mx-auto px-6 md:px-12 mt-12 pt-8 border-t border-slate-900 text-xs text-slate-500 font-semibold text-center sm:text-left">
+              <span>© 2026 PRIMER. Personalized learning for everyone.</span>
+            </div>
+          </footer>
+
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
